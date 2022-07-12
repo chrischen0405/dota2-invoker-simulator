@@ -41,6 +41,9 @@
                @click="clickBtn(letter)"
                :key="index">
             <img :src="require(`@/assets/img/skill${letter}.png`)" :alt="letter">
+            <span class="text" @click="editKeyCode(index)">
+              {{ letterKeyList[index] ? keyToLetterMap[letterKeyList[index]] : '' }}
+            </span>
           </div>
         </div>
       </template>
@@ -50,7 +53,6 @@
 
 <script>
 import {
-  allowKey,
   keyToLetterMap,
   skillMap,
   allSkillList
@@ -70,8 +72,12 @@ export default {
       isEndGame: true, // 是否结束游戏，结束不可操作
       wantSkillCode: '', // 需要的技能快捷键
       btnList: ['Q', 'W', 'E', 'R'], // 键盘按键
+      isEditCode: false, // 是否在改建
+      editCode: 0, // 暂存的按键code
+      letterKeyList: [81, 87, 69, 82], // 改建按键码
       letterList: [], // 字母组合列表
-      skillCode: '' // 生成的技能快捷键
+      skillCode: '', // 生成的技能快捷键
+      keyToLetterMap
     }
   },
   created() {
@@ -102,6 +108,13 @@ export default {
         }
       }, 100)
     },
+    editKeyCode (index) {
+      if (!this.isEndGame) return
+      console.log(index, this.isEndGame)
+      this.isEditCode = true
+      this.editCode = this.letterKeyList[index]
+      this.$set(this.letterKeyList, index, '')
+    },
     endGame () {
       this.isEndGame = true
       window.clearInterval(this.timer)
@@ -111,13 +124,22 @@ export default {
     watchKeyBoard () {
       document.onkeydown = e => {
         const key = e.keyCode
-        if (allowKey.includes(key)) {
-          const letter = keyToLetterMap[key]
+        if (this.isEditCode) {
+          for (let i in this.letterKeyList) {
+            if (this.letterKeyList[i] === '') {
+              this.$set(this.letterKeyList, i, key)
+              this.isEditCode = false
+            }
+          }
+        }
+        const keyIndex = this.letterKeyList.indexOf(key)
+        if (keyIndex !== -1) {
+          const letter = this.btnList[keyIndex]
           this.clickBtn(letter)
         }
       }
     },
-    clickBtn (letter) {
+    clickBtn (letter) { // 输入字母 Q W E R 表示不同技能
       if (this.isEndGame) return
       if (letter === 'R') { // 切技能
         if (this.letterList.length === 3) {
